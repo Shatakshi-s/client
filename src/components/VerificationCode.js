@@ -1,22 +1,23 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 const VerificationCode = () => {
     const [code, setCode] = useState(['', '', '', '', '', '']);
     const [error, setError] = useState('');
-    const [success, setSuccess] = useState(false);
+    const navigate = useNavigate(); // Initialize navigate for navigation
 
     const handleChange = (value, index) => {
         if (/^\d$/.test(value) || value === '') {
             const newCode = [...code];
             newCode[index] = value;
             setCode(newCode);
+            setError('');
 
+            // Move focus to the next input
             if (value && index < 5) {
                 document.getElementById(`input-${index + 1}`).focus();
             }
-
-            setError('');
         } else {
             setError('Only digits are allowed');
         }
@@ -24,7 +25,7 @@ const VerificationCode = () => {
 
     const handlePaste = (event) => {
         const pasteData = event.clipboardData.getData('text').slice(0, 6).split('');
-        const newCode = pasteData.map((char, index) => /^\d$/.test(char) ? char : '');
+        const newCode = pasteData.map((char) => /^\d$/.test(char) ? char : '');
         setCode(newCode);
         newCode.forEach((char, index) => {
             if (char && index < 5) {
@@ -39,8 +40,7 @@ const VerificationCode = () => {
         try {
             const response = await axios.post('http://localhost:5000/verify', { code: codeString });
             if (response.status === 200) {
-                setSuccess(true);
-                // Redirect to success page (not implemented here)
+                navigate('/success'); // Redirect on success
             }
         } catch (error) {
             setError('Verification Error');
@@ -59,13 +59,19 @@ const VerificationCode = () => {
                         value={digit}
                         onChange={(e) => handleChange(e.target.value, index)}
                         onPaste={handlePaste}
-                        style={{ borderColor: error ? 'red' : 'black' }}
+                        style={{
+                            borderColor: error ? 'red' : 'black',
+                            width: '40px',
+                            height: '40px',
+                            fontSize: '24px',
+                            textAlign: 'center',
+                            margin: '0 5px'
+                        }}
                     />
                 ))}
             </div>
             {error && <p style={{ color: 'red' }}>{error}</p>}
             <button type="submit">Submit</button>
-            {success && <p>Verification Successful!</p>}
         </form>
     );
 };
